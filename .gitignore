@@ -1,2 +1,4 @@
 expenses/
 env/
+.env
+geckodriver*
