@@ -1,6 +1,7 @@
 expenses/
 env/
-.env
+__pycache__/
+**/*.env
+**/*.xls
 .prettier*
 geckodriver*
-*.xls
