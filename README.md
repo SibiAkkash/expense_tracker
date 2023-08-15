@@ -14,11 +14,12 @@
 
 
 #### how to run the scrape process daily ?
-1. cron job
-2. cloud function (can we schedule this ?)
-3. spin up container every night, process, and kill container
+- cron job
+- cloud function (can we schedule this ?)
+- spin up container every night, process, and kill container
 
 ## _Safely_ using credentials 
-1. On local machine - use environment variables or files (variables are better, because we can use them for runtime only)
-2. On cloud - can use AWS Secrets Manager to securely retreive netbanking credentials. 
+- On local machine - use environment variables or files (variables are better, because we can use them for runtime only)
+    - Eg. `VAR1=value1 VAR2=value2 command` `VAR1` and `VAR2` are used only for running the `command`
+- On cloud - can use AWS Secrets Manager to securely retreive netbanking credentials. 
 
