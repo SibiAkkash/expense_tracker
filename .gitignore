@@ -1,4 +1,6 @@
 expenses/
 env/
 .env
+.prettier*
 geckodriver*
+*.xls
