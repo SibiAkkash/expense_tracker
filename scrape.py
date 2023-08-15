@@ -3,14 +3,14 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
 
-import time
 import os
+import time
+import datetime
 from dotenv import load_dotenv
 load_dotenv()
 
-import datetime
+from parse_transactions import parse_transactions
 
-datetime.date.month
 
 HDFC_NETBANKING_URL = "https://netbanking.hdfcbank.com/netbanking/"
 
@@ -23,14 +23,20 @@ SECURE_ID_CHECKBOX_XPATH = '//*[@id="chkrsastu"]'
 LOGIN_XPATH = '/html/body/form/div/div[3]/div/div[1]/div[2]/div[1]/div[4]/div[2]/a'
 
 
+from pathlib import Path
+
 def init_driver_with_options() -> webdriver.Firefox:
     """ Return firefox webdriver with options (headless mode, custom download location) """
     # set custom download directory
+    download_dir : Path = Path.cwd() / "transaction_lists"
+    download_dir.mkdir(exist_ok=True)
+    
     options = FirefoxOptions()
     options.set_preference('browser.download.folderList', 2)
-    options.set_preference('browser.download.dir', os.getcwd())  
+    options.set_preference('browser.download.dir', str(download_dir))
     options.add_argument('--headless')
-    print('initialised driver')
+    
+    print(f'initialised driver headless mode, files download location: {str(download_dir)}')
     # initialise driver with options
     return webdriver.Firefox(options=options)
 
@@ -145,6 +151,8 @@ def download_transaction_list(driver: webdriver.Firefox, from_date: int, to_date
     time.sleep(2)
 
 
+
+
 def quit(driver: webdriver.Firefox) -> None:
     driver.close()    
     print('quit driver')
@@ -154,6 +162,10 @@ if __name__ == "__main__":
     driver = init_driver_with_options()
     login_to_site(driver)
     navigate_to_account_statement(driver)
-    download_transaction_list(driver, from_date=11, to_date=12)
+    download_transaction_list(driver, from_date=14, to_date=15)
     quit(driver)
+    
+    transactions_dir = Path.cwd() / "transaction_lists"
+    latest_downloaded_file_path = list(sorted(transactions_dir.iterdir(), key=lambda file: file.name, reverse=True))[0]
+    parse_transactions(transactions_xls_file_path=str(latest_downloaded_file_path))
     
