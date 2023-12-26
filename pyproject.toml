@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "expense-tracker"
+version = "0.1.0"
+description = ""
+authors = ["SibiAkkash <sibi.akkash@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+xlrd = "^2.0.1"
+selenium = "^4.16.0"
+pandas = "^2.1.4"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
