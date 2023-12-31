@@ -6,6 +6,8 @@ from selenium.webdriver.firefox.options import Options as FirefoxOptions
 import os
 import time
 import datetime
+from pathlib import Path
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -23,7 +25,6 @@ SECURE_ID_CHECKBOX_XPATH = '//*[@id="chkrsastu"]'
 LOGIN_XPATH = '/html/body/form/div/div[3]/div/div[1]/div[2]/div[1]/div[4]/div[2]/a'
 
 
-from pathlib import Path
 
 def init_driver_with_options() -> webdriver.Firefox:
     """ Return firefox webdriver with options (headless mode, custom download location) """
@@ -151,7 +152,6 @@ def download_transaction_list(driver: webdriver.Firefox, from_date: int, to_date
     print(f'''downloading transaction excel sheet for {from_date}/{today.month}/{today.year} to {to_date}/{today.month}/{today.year} range''')
 
     time.sleep(2)
-
 
 
 

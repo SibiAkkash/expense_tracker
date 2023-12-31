@@ -37,6 +37,13 @@ def get_all_tags(session: Session = Depends(get_db_session)):
     return tags
 
 
+@app.get('/api/transactions', response_model=list[schema.TransactionSchema])
+def get_all_transactions(session: Session = Depends(get_db_session)):
+    transactions = session.scalars(select(models.Transaction)).all()
+    return transactions
+
+
+
 '''
     * By specifiying response_model as Union of 2 pydantic models, 
     * the returned object is validated against either of these 2 models
@@ -59,7 +66,6 @@ def get_tag(
     ) -> models.Tag | dict[str, str]:
     
     tag = session.scalar(select(models.Tag).where(models.Tag.id == tag_id))
-    print(type(tag))
     
     if not tag:
         error_message = {"message": f"Tag with id={tag_id} is not present in the db"}
@@ -76,3 +82,25 @@ def get_tag(
 def add_tag(session: Session = Depends(get_db_session)):
     pass
 
+
+@app.put('/api/tag/{tag_id}', response_model=Union[schema.TagSchema, schema.NotFoundResponse])
+def update_tag_name(
+    tag_id: int, 
+    response: Response, 
+    tag_name: str,
+    session: Session = Depends(get_db_session),
+):
+    
+    tag = session.scalar(select(models.Tag).where(models.Tag.id == tag_id))
+    
+    if not tag:
+        response.status_code = status.HTTP_404_NOT_FOUND
+        return {"message": f"Tag with id={tag_id} is not present in the db"}
+    
+    tag.name = tag_name
+    session.commit()
+    session.refresh(tag)
+    
+    return tag    
+    
+    
