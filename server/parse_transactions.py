@@ -1,37 +1,13 @@
-import pandas as pd
 import xlrd
-
-from dataclasses import dataclass
-from pprint import pprint
-import datetime
+from pathlib import Path
+from sqlalchemy import insert
 
 from db import SessionLocal
-from pathlib import Path
+from db.models import Transaction
+from schema import TransactionCreateSchema
 
-print(SessionLocal)
 
-@dataclass
-class Transaction:
-    date: datetime.date
-    narration: str
-    reference_id: str
-    value_date: datetime.date
-    withdraw_amount: float
-    deposit_amount: float
-    closing_balance: float    
-    
-    def __repr__(self):
-        output = f'date = {self.date.strftime("%d/%m/%y")}\ntransaction_ref = {self.reference_id}\ndescription: {self.narration}\n'
-        # show whether amount was withdrawn or deposited
-        if self.deposit_amount == 0:
-            output += f'withdrew: Rs {self.withdraw_amount}\n'
-        if self.withdraw_amount == 0:
-            output += f'deposited: Rs {self.deposit_amount}\n'            
-        # show closing balance too
-        output += f'Closing balance: Rs {self.closing_balance}\n'
-        return output
-        
-
+DATE_FORMAT_USED_IN_DUMP = "%d/%m/%y"    
 
 def parse_transactions(transactions_xls_file_path: str):
     """ Given xls file of transactions, parse out the transactions"""
@@ -77,25 +53,31 @@ def parse_transactions(transactions_xls_file_path: str):
                 break
 
     
-    # labels = sheet.row_values(label_row_idx)
-    # print(labels, transaction_entries_start_idx + 1, transaction_entries_end_idx + 1)
-
-    DATE_FORMAT_USED_IN_DUMP = "%d/%m/%y"    
+    transactions = []
 
     for idx, row in enumerate(sheet.get_rows()):
         if transaction_entries_start_idx <= idx <= transaction_entries_end_idx:
             values = sheet.row_values(idx)
-            # convert dates to datetime objects
-            values[0] = datetime.datetime.strptime(row[0].value, DATE_FORMAT_USED_IN_DUMP)
-            values[3] = datetime.datetime.strptime(row[3].value, DATE_FORMAT_USED_IN_DUMP)
-            # if withdraw or deposit amount is an empty str, store its value as 0
-            if row[4].value == '': values[4] = 0.0
-            if row[5].value == '': values[5] = 0.0
-            # construct Transaction object
-            transaction = Transaction(*values)
-            pprint(transaction)
+            date, description_from_bank, reference_id, value_date, withdraw_amount, deposit_amount, closing_balance = values
 
-
+            transaction = TransactionCreateSchema(
+                date = date,
+                description_from_bank = description_from_bank,
+                reference_id = reference_id,
+                value_date = value_date,
+                withdraw_amount = withdraw_amount if withdraw_amount else 0.0,
+                deposit_amount = deposit_amount if deposit_amount else 0.0,
+                closing_balance = closing_balance
+            )
+            
+            transactions.append(transaction.model_dump())
+            
+            
+    with SessionLocal() as session:
+        session.execute(insert(Transaction).values(transactions))
+        session.commit()
+        
+            
 if __name__ == "__main__":
     print('parsing last downloaded transactions sheet')
     transactions_dir = Path.cwd() / "transaction_lists"
