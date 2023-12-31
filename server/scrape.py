@@ -38,6 +38,8 @@ def init_driver_with_options() -> webdriver.Firefox:
     
     print(f'initialised driver headless mode, files download location: {str(download_dir)}')
     # initialise driver with options
+    # searches for firefox driver in current directory
+    # is there a way to specify path to the driver ?
     return webdriver.Firefox(options=options)
 
 

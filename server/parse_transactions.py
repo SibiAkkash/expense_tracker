@@ -5,6 +5,10 @@ from dataclasses import dataclass
 from pprint import pprint
 import datetime
 
+from db import SessionLocal
+from pathlib import Path
+
+print(SessionLocal)
 
 @dataclass
 class Transaction:
@@ -90,4 +94,10 @@ def parse_transactions(transactions_xls_file_path: str):
             # construct Transaction object
             transaction = Transaction(*values)
             pprint(transaction)
-        
+
+
+if __name__ == "__main__":
+    print('parsing last downloaded transactions sheet')
+    transactions_dir = Path.cwd() / "transaction_lists"
+    latest_downloaded_file_path = list(sorted(transactions_dir.iterdir(), key=lambda file: file.name, reverse=True))[0]
+    parse_transactions(transactions_xls_file_path=str(latest_downloaded_file_path))

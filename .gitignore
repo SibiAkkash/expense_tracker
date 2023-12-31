@@ -1,7 +1,11 @@
-expenses/
-env/
 __pycache__/
+
+*.db
 **/*.env
+transaction_lists/
 **/*.xls
+
 .prettier*
 geckodriver*
+
+*.ipynb

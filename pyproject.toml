@@ -11,6 +11,9 @@ xlrd = "^2.0.1"
 selenium = "^4.16.0"
 pandas = "^2.1.4"
 python-dotenv = "^1.0.0"
+sqlalchemy = "^2.0.23"
+fastapi = "^0.108.0"
+uvicorn = {extras = ["standard"], version = "^0.25.0"}
 
 
 [build-system]
