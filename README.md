@@ -1,16 +1,16 @@
 
 #### Tasks
 
-[X] Use selenium for scraping  
-[ ] Try seleniumbase for scraping
-[X] scrape hdfc netbanking site to download daily transaction sheet. **This needs user Id and password for netbanking**  
-[X] parse transaction sheet   
-[ ] make DB schema  
-[ ] store transactions in db  
-[ ] upload transactions to cloud db (maybe ?), so that app can read off it and list it to user  
-[ ] user can add/remove tags, add description (text) to the transactions  
-[ ] transactions that don't have tags added to them should be up on the list  
-[ ] screen to show split of expenses on each tag  
+- [x] Use selenium for scraping  
+    - [ ] Try seleniumbase for scraping
+- [x] scrape hdfc netbanking site to download daily transaction sheet.  
+- [x] parse transaction sheet   
+- [x] make DB schema  
+- [x] store transactions in db  
+    - [ ] upload transactions to cloud db (maybe ?), so that app can read off it and list it to  user  
+- [ ] user can add/remove tags, add description (text) to the transactions  
+- [ ] transactions that don't have tags added to them should be up on the list  
+- [ ] screen to show split of expenses on each tag  
 
 
 #### how to run the scrape process daily ?
