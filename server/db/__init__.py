@@ -21,6 +21,7 @@ SessionLocal = sessionmaker(engine, autoflush=False, autocommit=False)
 # Enabling Foreign Key Support: https://www.sqlite.org/foreignkeys.html
 # https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#foreign-key-support
 
+
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dpapi_connection, connection_record):
     cursor = dpapi_connection.cursor()

@@ -9,3 +9,5 @@ transaction_lists/
 geckodriver*
 
 *.ipynb
+
+**/*.ruff_cache/
