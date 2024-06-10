@@ -89,10 +89,46 @@ def navigate_to_account_statement(driver: webdriver.Firefox) -> None:
     driver.switch_to.default_content()
 
 
+def choose_date_in_calendar(driver: webdriver.Firefox, date: datetime.date) -> None:
+    print(f"choosing {date} in datepicker")
+    CALENDER_DIV_XPATH = '//*[@id="ui-datepicker-div"]'
+    calendar_div = driver.find_element(By.XPATH, CALENDER_DIV_XPATH)
+
+    calendar_month_dropdown = Select(
+        calendar_div.find_element(By.CLASS_NAME, "ui-datepicker-month")
+    )
+
+    calendar_year_dropdown = Select(
+        calendar_div.find_element(By.CLASS_NAME, "ui-datepicker-year")
+    )
+
+    # months are zero-indexed
+    calendar_month_dropdown.select_by_value(str(date.month - 1))
+    time.sleep(1)
+
+    calendar_year_dropdown.select_by_value(str(date.year))
+    time.sleep(1)
+
+    calender_table_element = calendar_div.find_element(
+        By.CLASS_NAME, "ui-datepicker-calendar"
+    )
+    calendar_tbody = calender_table_element.find_element(By.TAG_NAME, "tbody")
+    calendar_dates = calendar_tbody.find_elements(By.TAG_NAME, "td")
+
+    date_element_to_choose = list(
+        filter(lambda date_element: date_element.text == str(date.day), calendar_dates)
+    )[0]
+    date_element_to_choose.click()
+
+    print("done")
+    time.sleep(1)
+
+
 def download_transaction_list(
-    driver: webdriver.Firefox, from_date: int, to_date: int
+    driver: webdriver.Firefox, from_date: datetime.date, to_date: datetime.date
 ) -> None:
-    """Download transaction list for [from_date - to_date] range, for current month"""
+    """Download transactions between from_date and to_date range"""
+    print(f"trying to download transactions from {from_date} to {to_date}")
     # Choose options to get transaction list
     driver.switch_to.frame("main_part")
     time.sleep(1)
@@ -114,43 +150,19 @@ def download_transaction_list(
     SELECT_PERIOD_XPATH = "/html/body/form/table[1]/tbody/tr[4]/td[1]/span"
     driver.find_element(By.XPATH, SELECT_PERIOD_XPATH).click()
 
-    # choose date in calendar
-    def _choose_date_in_calendar(driver: webdriver.Firefox, date: int) -> None:
-        if not isinstance(date, int) or date <= 0 or date > 31:
-            print(
-                "Invalid date, date should be a number between 1 and bound of the current month"
-            )
-            return
-
-        CALENDER_DIV_XPATH = '//*[@id="ui-datepicker-div"]'
-        calendar_div = driver.find_element(By.XPATH, CALENDER_DIV_XPATH)
-
-        calender_table_element = calendar_div.find_element(
-            By.CLASS_NAME, "ui-datepicker-calendar"
-        )
-        calendar_tbody = calender_table_element.find_element(By.TAG_NAME, "tbody")
-        calendar_dates = calendar_tbody.find_elements(By.TAG_NAME, "td")
-
-        date_element_to_choose = list(
-            filter(lambda date_element: date_element.text == str(date), calendar_dates)
-        )[0]
-        date_element_to_choose.click()
-
-        time.sleep(1)
-
     # open from-date calendar
     FROM_DATE_CALENDAR_BUTTON_XPATH = (
         "/html/body/form/table[1]/tbody/tr[4]/td[2]/div[2]/button/span[1]"
     )
     driver.find_element(By.XPATH, FROM_DATE_CALENDAR_BUTTON_XPATH).click()
-    _choose_date_in_calendar(driver, date=from_date)
+    choose_date_in_calendar(driver, date=from_date)
 
     # open to-date calendar
     TO_DATE_CALENDAR_BUTTON_XPATH = (
         "/html/body/form/table[1]/tbody/tr[5]/td[2]/div[2]/button/span[1]"
     )
     driver.find_element(By.XPATH, TO_DATE_CALENDAR_BUTTON_XPATH).click()
-    _choose_date_in_calendar(driver, date=to_date)
+    choose_date_in_calendar(driver, date=to_date)
 
     # get list of transactions
     VIEW_BUTTON_XPATH = "/html/body/form/table[1]/tbody/tr[7]/td/a"
@@ -181,7 +193,11 @@ if __name__ == "__main__":
     driver = init_driver_with_options()
     login_to_site(driver)
     navigate_to_account_statement(driver)
-    download_transaction_list(driver, from_date=14, to_date=15)
+
+    today = datetime.date.today()
+    yesterday = today - datetime.timedelta(days=1)
+
+    download_transaction_list(driver, from_date=yesterday, to_date=today)
     quit(driver)
 
     transactions_dir = Path.cwd() / "transaction_lists"
