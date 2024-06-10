@@ -22,16 +22,29 @@ class TagCreateSchema(BaseModel):
     description: str | None
 
 
-class TransactionCreateSchema(BaseModel):
+class UntaggedTransactionCreateSchema(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     description_from_bank: str
-    reference_id: int
+    reference_id: str
     date: str
     value_date: str
     withdraw_amount: float
     deposit_amount: float
     closing_balance: float
+
+
+class TaggedTransactionCreateSchema(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    description_from_bank: str
+    reference_id: str
+    date: str
+    value_date: str
+    withdraw_amount: float
+    deposit_amount: float
+    closing_balance: float
+    tags: list[TagSchema] | None
 
 
 class TransactionSchema(BaseModel):
@@ -39,12 +52,13 @@ class TransactionSchema(BaseModel):
 
     id: int
     description_from_bank: str
-    reference_id: int
+    reference_id: str
     date: str
     value_date: str
     withdraw_amount: float
     deposit_amount: float
     closing_balance: float
+    tags: list[TagSchema] | None
 
 
 class NotFoundResponse(BaseModel):

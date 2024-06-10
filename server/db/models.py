@@ -28,7 +28,7 @@ class Transaction(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     description_from_bank: Mapped[str]  # UPI - sender name - sender details etc..
-    reference_id: Mapped[int]  # transaction reference id from the bank
+    reference_id: Mapped[str]  # transaction reference id from the bank
     date: Mapped[str]
     value_date: Mapped[str]
     withdraw_amount: Mapped[float] = mapped_column(insert_default=0.0)
@@ -64,7 +64,7 @@ class Tag(Base):
     __tablename__ = "tag"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str]
+    name: Mapped[str] = mapped_column(unique=True)
     description: Mapped[Optional[str]]
 
     def __repr__(self):

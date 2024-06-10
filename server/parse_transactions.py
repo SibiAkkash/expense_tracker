@@ -1,16 +1,55 @@
 import xlrd
 from pathlib import Path
-from sqlalchemy import insert
+from sqlalchemy import insert, select
 
 from db import SessionLocal
 from db.models import Transaction
-from schema import TransactionCreateSchema
+from schema import UntaggedTransactionCreateSchema
+
+from pydantic import ValidationError
 
 
 DATE_FORMAT_USED_IN_DUMP = "%d/%m/%y"
 
 
-def parse_transactions(transactions_xls_file_path: str):
+def save_transactions(transactions: list[UntaggedTransactionCreateSchema]) -> None:
+    ref_ids = [transaction.reference_id for transaction in transactions]
+
+    with SessionLocal() as session:
+        existing_transactions = session.scalars(
+            select(Transaction).where(Transaction.reference_id.in_(ref_ids))
+        ).all()
+
+    # check if a transaction with same ref id is already in DB
+    transactions_deduped = []
+    for transaction in transactions:
+        exists = False
+        
+        for already_present in existing_transactions:
+            if (
+                transaction.reference_id == already_present.reference_id
+                and transaction.description_from_bank
+                == already_present.description_from_bank
+                and transaction.date == already_present.date
+            ):
+                exists = True
+                break
+
+        if exists:
+            print(f"transaction {transaction.reference_id} exists, skipping...")
+            continue
+
+        transactions_deduped.append(transaction.model_dump())
+
+    if not transactions_deduped:
+        return
+
+    with SessionLocal() as session:
+        session.execute(insert(Transaction).values(transactions_deduped))
+        session.commit()
+
+
+def parse_transactions_from_sheet(transactions_xls_file_path: str):
     """Given xls file of transactions, parse out the transactions"""
     print("-" * 150)
     print(f'PARSING "{transactions_xls_file_path}" file')
@@ -65,22 +104,22 @@ def parse_transactions(transactions_xls_file_path: str):
                 deposit_amount,
                 closing_balance,
             ) = values
+            try:
+                transaction = UntaggedTransactionCreateSchema(
+                    date=date,
+                    description_from_bank=description_from_bank,
+                    reference_id=reference_id,
+                    value_date=value_date,
+                    withdraw_amount=withdraw_amount if withdraw_amount else 0.0,
+                    deposit_amount=deposit_amount if deposit_amount else 0.0,
+                    closing_balance=closing_balance,
+                )
+                transactions.append(transaction)
 
-            transaction = TransactionCreateSchema(
-                date=date,
-                description_from_bank=description_from_bank,
-                reference_id=reference_id,
-                value_date=value_date,
-                withdraw_amount=withdraw_amount if withdraw_amount else 0.0,
-                deposit_amount=deposit_amount if deposit_amount else 0.0,
-                closing_balance=closing_balance,
-            )
+            except ValidationError as e:
+                print(e)
 
-            transactions.append(transaction.model_dump())
-
-    with SessionLocal() as session:
-        session.execute(insert(Transaction).values(transactions))
-        session.commit()
+    save_transactions(transactions)
 
 
 if __name__ == "__main__":
@@ -89,4 +128,6 @@ if __name__ == "__main__":
     latest_downloaded_file_path = list(
         sorted(transactions_dir.iterdir(), key=lambda file: file.name, reverse=True)
     )[0]
-    parse_transactions(transactions_xls_file_path=str(latest_downloaded_file_path))
+    parse_transactions_from_sheet(
+        transactions_xls_file_path=str(latest_downloaded_file_path)
+    )

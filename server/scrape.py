@@ -1,4 +1,5 @@
 from selenium import webdriver
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.firefox.options import Options as FirefoxOptions
@@ -9,7 +10,7 @@ import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
-from parse_transactions import parse_transactions
+from parse_transactions import parse_transactions_from_sheet
 
 load_dotenv()
 
@@ -171,15 +172,18 @@ def download_transaction_list(
     time.sleep(2)
 
     # select download format as excel, and download
-    download_format_select = Select(driver.find_element(By.NAME, "fldFormatType"))
+    try:
+        download_format_select = Select(driver.find_element(By.NAME, "fldFormatType"))
+    except NoSuchElementException as e:
+        print("No transactions in this date range")
+        return
+
     download_format_select.select_by_value("X")
     DOWNLOAD_BUTTON_XPATH = "/html/body/form/table[5]/tbody/tr[2]/td/a"
+
     driver.find_element(By.XPATH, DOWNLOAD_BUTTON_XPATH).click()
 
-    today = datetime.date.today()
-    print(
-        f"""downloading transaction excel sheet for {from_date}/{today.month}/{today.year} to {to_date}/{today.month}/{today.year} range"""
-    )
+    print(f"downloading transactions sheet for {from_date} to {to_date}")
 
     time.sleep(2)
 
@@ -204,4 +208,6 @@ if __name__ == "__main__":
     latest_downloaded_file_path = list(
         sorted(transactions_dir.iterdir(), key=lambda file: file.name, reverse=True)
     )[0]
-    parse_transactions(transactions_xls_file_path=str(latest_downloaded_file_path))
+    parse_transactions_from_sheet(
+        transactions_xls_file_path=str(latest_downloaded_file_path)
+    )
