@@ -1,29 +1,18 @@
-from sqlalchemy import create_engine, event
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from pathlib import Path
+
+import sys
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+DB_URL = os.getenv("DB_URL")
 
-DB_NAME = "transactions.db"
-DIR_ROOT = Path(__file__).parent.parent.parent
-DB_PATH = os.getenv("DB_PATH", f"sqlite:///{DIR_ROOT / DB_NAME}")
+if not DB_URL:
+    print("DB_URL environment variable is not set !")
+    sys.exit(0)
 
-engine = create_engine(DB_PATH, connect_args={"check_same_thread": False}, echo=True)
+engine = create_engine(DB_URL, echo=True)
 
 SessionLocal = sessionmaker(engine, autoflush=False, autocommit=False)
-
-
-# Foreign key support must be explicitly enabled for each sqlite connection
-# Enabling Foreign Key Support: https://www.sqlite.org/foreignkeys.html
-# https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#foreign-key-support
-
-
-@event.listens_for(Engine, "connect")
-def set_sqlite_pragma(dpapi_connection, connection_record):
-    cursor = dpapi_connection.cursor()
-    cursor.execute("PRAGMA foreign_keys=ON")
-    cursor.close()
