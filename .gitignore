@@ -8,6 +8,11 @@ transaction_lists/
 .prettier*
 geckodriver*
 
-*.ipynb
+**/*.ipynb
 
 **/*.ruff_cache/
+
+*.csv
+
+lambda/package/psycopg2*
+**/*.zip

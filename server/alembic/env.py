@@ -18,7 +18,7 @@ load_dotenv()
 config = context.config
 
 
-DB_URL = os.getenv("DB_URL")
+DB_URL = os.getenv("DEV_DB_URL")
 if not DB_URL:
     print("DB_URL env variable is not set !! Exiting...")
     sys.exit(0)

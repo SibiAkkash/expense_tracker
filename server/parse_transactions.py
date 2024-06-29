@@ -1,4 +1,7 @@
+import os
+import boto3
 import xlrd
+import json
 from pathlib import Path
 from sqlalchemy import insert, select
 
@@ -8,6 +11,9 @@ from schema import UntaggedTransactionCreateSchema
 
 from pydantic import ValidationError
 
+from dotenv import load_dotenv
+
+load_dotenv()
 
 DATE_FORMAT_USED_IN_DUMP = "%d/%m/%y"
 
@@ -47,6 +53,43 @@ def save_transactions(transactions: list[UntaggedTransactionCreateSchema]) -> No
     with SessionLocal() as session:
         session.execute(insert(Transaction).values(transactions_deduped))
         session.commit()
+
+
+def send_to_lambda(transactions: list[UntaggedTransactionCreateSchema]):
+    if not transactions:
+        print("No transactions to process !")
+        return
+
+    ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID")
+    SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")
+
+    if not ACCESS_KEY or not SECRET_KEY:
+        print("AWS access key and secret key env variables must be set ! Exiting !")
+        return
+
+    session = boto3.Session(
+        aws_access_key_id=ACCESS_KEY,
+        aws_secret_access_key=SECRET_KEY,
+    )
+
+    client = session.client(service_name="lambda")
+
+    LAMBDA_ARN = "arn:aws:lambda:ap-south-1:982695942133:function:lambda-rds-conn"
+
+    transactions_dump = [transaction.model_dump() for transaction in transactions]
+
+    response = client.invoke(
+        FunctionName=LAMBDA_ARN,
+        InvocationType="RequestResponse",
+        Payload=json.dumps(transactions_dump),
+    )
+
+    response_data = response["Payload"].read().decode('utf-8')
+
+    if "FunctionError" in response:
+        print(f"Lambda error: {response_data}")
+    else:
+        print(response_data)
 
 
 def parse_transactions_from_sheet(transactions_xls_file_path: str):
@@ -119,7 +162,7 @@ def parse_transactions_from_sheet(transactions_xls_file_path: str):
             except ValidationError as e:
                 print(e)
 
-    save_transactions(transactions)
+    send_to_lambda(transactions)
 
 
 if __name__ == "__main__":

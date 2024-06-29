@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-DB_URL = os.getenv("DB_URL")
+DB_URL = os.getenv("DEV_DB_URL")
 
 if not DB_URL:
     print("DB_URL environment variable is not set !")
